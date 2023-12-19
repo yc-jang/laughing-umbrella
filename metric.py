@@ -41,3 +41,32 @@ metrics = {
 }
 
 plot_metrics(metrics)
+
+
+####################################################
+# 'dtm' 컬럼을 datetime 객체로 변환
+df['dtm'] = pd.to_datetime(df['dtm'])
+
+# 특정 날짜 설정 (예시로 '2023-01-01' 사용)
+cutoff_date = pd.to_datetime('2023-01-01')
+
+# 날짜 기준으로 데이터 분리
+before_cutoff = df[df['dtm'] < cutoff_date]
+after_cutoff = df[df['dtm'] >= cutoff_date]
+
+# 시각화
+fig = go.Figure()
+
+# 특정 날짜 이전 데이터
+fig.add_trace(go.Scatter(x=before_cutoff['dtm'], y=before_cutoff['y'],
+                         mode='lines', name='Before Cutoff'))
+
+# 특정 날짜 이후 데이터 (빨간색으로 표시)
+fig.add_trace(go.Scatter(x=after_cutoff['dtm'], y=after_cutoff['y'],
+                         mode='lines', name='After Cutoff', line=dict(color='red')))
+
+# 그래프 레이아웃 설정
+fig.update_layout(title='Y Data with Cutoff Date', xaxis_title='Date', yaxis_title='Y Value')
+
+# 그래프 보이기
+fig.show()
