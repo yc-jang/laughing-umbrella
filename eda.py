@@ -94,12 +94,13 @@ class EDA:
         self.perform_umap(n_components, n_neighbors, min_dist, metric)
         fig = px.scatter(x=self.umap_results[:, 0], y=self.umap_results[:, 1], color=self.df[self.target_column], title="UMAP Visualization")
         fig.show()
-# 사용 예시
-eda = EDA('breast_cancer')
-eda.load_data()
-eda.display_basic_info()  # 데이터의 기본 정보를 표시
-eda.plot_correlation_matrix()
-rfe_features = eda.perform_rfe()
-eda.plot_rfe_results()
-eda.perform_pca()
-eda.plot_pca_results()
+        
+if __name__== "__main__":
+    df = pd.read_pickle('uci_har_dataset.pkl')
+    eda = EDA(df, 'Activity')
+    eda.display_basic_info()
+    eda.plot_correlation_matrix()
+    eda.plot_rfe_results()
+    eda.plot_pca_results()
+    eda.plot_pls_results()
+    eda.plot_umap_results()
