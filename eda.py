@@ -497,6 +497,46 @@ class EDA:
         sns.clustermap(cluster_patterns, cmap='coolwarm', standard_scale=1)
         return cluster_patterns
 
+    def get_top_bottom_features(self, cluster_patterns, percentile=20):
+        # cluster_patterns = self.analyze_clusters()  # 클러스터별 평균 패턴 얻기
+
+        top_features = {}
+        bottom_features = {}
+
+        for cluster in cluster_patterns.index:
+            cluster_data = cluster_patterns.loc[cluster]
+
+            # 상위 및 하위 퍼센타일 계산
+            top_threshold = np.percentile(cluster_data, 100 - percentile)
+            bottom_threshold = np.percentile(cluster_data, percentile)
+
+            # 상위 및 하위 피처 추출
+            top_features[cluster] = cluster_data[cluster_data >= top_threshold].index.tolist()
+            bottom_features[cluster] = cluster_data[cluster_data <= bottom_threshold].index.tolist()
+
+        return top_features, bottom_features
+
+    def analyze_clusters_n(self, n_clusters=3):
+        from sklearn.cluster import KMeans
+        import seaborn as sns
+
+        # 데이터 클러스터링
+        X = self.df.drop(self.target_column, axis=1)
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42).fit(X)
+        self.df['Cluster'] = kmeans.labels_
+        cluster_df = pd.DataFrame({'Cluster': kmeans.labels_}, index=self.df.index)
+        # 클러스터별 패턴 분석
+        cluster_patterns = self.df.groupby('Cluster').mean()
+        
+        # mean/std-epsilon 스케일링
+        cluster_patterns = (cluster_patterns - cluster_patterns.mean()) / (cluster_patterns.std() + 1e-10)
+
+        top_features, bottom_features = self.get_top_bottom_features(cluster_patterns)
+        # 클러스터별 평균 특성 값 시각화
+        sns.clustermap(cluster_patterns, cmap='coolwarm')
+        
+        return cluster_patterns
+
 #%%
 if __name__== "__main__":
     df = pd.read_pickle('uci_har_dataset.pkl')
