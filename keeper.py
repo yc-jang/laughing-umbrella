@@ -58,6 +58,39 @@ class ModelOptimizer:
 
         return model
 
+
+class RecentDataKeeper:
+    def __init__(self, max_lag):
+        self.max_lag = max_lag
+        self.data = pd.DataFrame()
+
+    def update(self, new_data):
+        # 새 데이터와 기존 데이터를 결합하고 DTM 기준으로 정렬
+        self.data = pd.concat([self.data, new_data]).sort_values(by='DTM')
+
+        # 중복된 시간 데이터 처리 (최신 데이터만 유지)
+        self.data = self.data.drop_duplicates(subset='DTM', keep='last')
+
+        # max_lag 기간 동안의 데이터만 유지
+        if len(self.data) > self.max_lag:
+            self.data = self.data.iloc[-self.max_lag:]
+
+    def create_group_lag_features(self, X, group_column, lags, time_column):
+        # 각 그룹별로 lag feature 생성
+        grouped = X.groupby(group_column)
+        lagged_dfs = []
+
+        for name, group in grouped:
+            group = group.sort_values(by=time_column)
+            for lag in lags:
+                group[f'lag_{lag}'] = group['target_column'].shift(lag)  
+            lagged_dfs.append(group)
+
+        # 모든 그룹을 하나의 DataFrame으로 병합
+        return pd.concat(lagged_dfs).sort_values(by=time_column)
+
+
+
 # 모델 학습 및 테스트 데이터 예측
 optimizer = ModelOptimizer(n_trials=100, max_lag=30)
 lags = [1, 2, ...]  # 사용할 라그 설정
